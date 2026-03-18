@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  app:
+    image: infinity-app
+    build:
+      context: .
+      target: development
+    container_name: infinity-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src:ro
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=dev
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: infinity-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis_data:
