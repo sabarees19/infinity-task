@@ -3,6 +3,7 @@ import { z } from "zod";
 import { addEmailJob } from "../queues/emailQueue";
 import { queueService } from "../services/queueService";
 import { logger } from "../config/logger";
+import { BadRequestError } from "../middleware/errorHandler";
 
 const router: ReturnType<typeof Router> = Router();
 
@@ -17,12 +18,10 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const parsed = emailBodySchema.safeParse(req.body);
-      if (!parsed.success) {
-        res
-          .status(400)
-          .json({ error: "Validation failed", details: parsed.error.message });
-        return;
-      }
+      if (!parsed.success)
+        throw new BadRequestError(
+          `Validation failed : ${JSON.stringify(parsed.error.flatten().fieldErrors, null, 2)}`,
+        );
 
       const jobId = await addEmailJob(parsed.data);
       logger.info({ jobId, to: parsed.data.to }, "Email job queued via API");
