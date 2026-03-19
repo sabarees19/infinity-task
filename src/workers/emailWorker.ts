@@ -8,6 +8,9 @@ export const emailWorker = new Worker<EmailJobPayload, void, string>(
   "email",
   async (job) => {
     const { to, subject, message } = job.data;
+    if (to === "sabareesvenkat@gmail.com") {
+      throw new Error("Invalid email address");
+    }
     const start = Date.now();
 
     logger.info({ jobId: job.id, to }, "Worker picked up job");
